@@ -7,6 +7,7 @@
     # my_reinstall_ansible_from_ppa: yes
     my_reinstall_ansible_from_ppa: no
 
+    # my_disable_ansible_host_key_change_check: no
     my_disable_ansible_host_key_change_check: yes
 
     # my_ansible_additonal_role_path: '/ansible/roles'
@@ -14,7 +15,6 @@
 
     # my_ansible_nb_parallel_targets: 20
     my_ansible_nb_parallel_targets: Null
-
 
   tasks:
 
@@ -36,26 +36,29 @@
         name: ansible
         update_cache: yes
 
+    - name: Generate a default ansible config file
+      shell: sudo /bin/bash -c "ansible-config init --disabled > /etc/ansible/ansible.cfg"
+
     - name: Update ansible roles path
       when: my_ansible_additonal_role_path
       lineinfile:
         path: /etc/ansible/ansible.cfg
-        line: "roles_path    = /etc/ansible/roles:{{ my_ansible_additonal_role_path }}"
-        regexp: '^#?roles_path *='
+        regexp: ';*roles_path=.*'
+        line: "roles_path=/etc/ansible/roles:{{ my_ansible_additonal_role_path }}"
 
     - name: Disable checking host key changes
       when: my_disable_ansible_host_key_change_check
       lineinfile:
         path: /etc/ansible/ansible.cfg
-        regexp: '.*host_key_checking = .*'
-        line: 'host_key_checking = False'
+        regexp: ';*host_key_checking=.*'
+        line: 'host_key_checking=False'
 
     - name: Tweek number of target hosts provisioned in parallel
       when: my_ansible_nb_parallel_targets
       lineinfile:
         path: /etc/ansible/ansible.cfg
-        regexp: '.*forks = .*'
-        line: 'forks = {{ my_ansible_nb_parallel_targets }}'
+        regexp: ';*forks=.*'
+        line: 'forks={{ my_ansible_nb_parallel_targets }}'
 
     - name: install pip
       apt:
@@ -76,7 +79,6 @@
         name:
           - pywinrm>=0.3.0
           - docker-py
-          - dnf
           - pyrax
 
     - name: install Ansible module dependencies (system)

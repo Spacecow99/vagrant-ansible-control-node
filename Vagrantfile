@@ -2,24 +2,19 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "debian/contrib-buster64"
-
+  config.vm.box = "generic/ubuntu2004"
+  config.vm.provider "hyperv"
   # config.vm.box_check_update = false
-
-  config.vm.network "private_network", ip: "192.168.254.253"
-
-  # config.vm.synced_folder ".", "/vagrant" # NB: for some reason, on some versions on VirtualBox this needs to be set explicitely
-  # config.vm.synced_folder "~/Nextcloud/ansible", "/ansible"
-
+  config.vm.synced_folder ".", "/vagrant" # NOTE: On Hyper-V this will create an SMB share and require the user's credentials.
   config.vm.boot_timeout = 600
 
-  config.vm.provider "virtualbox" do |vb|
-    vb.name = "ansible-control-node"
-    vb.memory = "512"
+  config.vm.provider "hyperv" do |hv|
+    hv.vmname = "ansible-control-node"
+    hv.cpus = 2
+    hv.memory = 2048
+    hv.linked_clone = true
   end
 
-  # fix vbox guest addition install
-  # config.vm.provision "basic", type: "shell", :path => "provision/guest-additions.sh"
   # basic box/machine normalization
   config.vm.provision "normalize", type: "ansible_local" do |ansible|
     ansible.playbook = "provision/normalize.yml"
